@@ -1,0 +1,38 @@
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.Alphabet import generic_dna
+
+def detect_chimera(sequence):
+    """
+    Détection de chimère dans la séquence d'ARN ribosomal 16S
+    """
+    # Diviser la séquence en deux parties égales
+    seq_len = len(sequence)
+    half_len = seq_len // 2
+    seq1 = sequence[:half_len]
+    seq2 = sequence[half_len:]
+    
+    # Créer deux objets Seq à partir de chaque partie de séquence
+    seq_obj1 = Seq(seq1, generic_dna)
+    seq_obj2 = Seq(seq2, generic_dna)
+    
+    # Effectuer un alignement global de séquence entre les deux objets Seq
+    from Bio.Align import PairwiseAligner
+    aligner = PairwiseAligner()
+    aligner.mode = 'global'
+    score = aligner.score(seq_obj1, seq_obj2)
+    
+    # Déterminer si la séquence est une chimère en comparant le score d'alignement à un seuil
+    threshold = 0.8  # Seuil d'alignement
+    if score/seq_len < threshold:
+        return True  # La séquence est une chimère
+    else:
+        return False  # La séquence n'est pas une chimère
+
+# Charger un fichier FASTA contenant les séquences d'ARN ribosomal 16S
+records = SeqIO.parse("16S_sequences.fasta", "fasta")
+
+# Parcourir toutes les séquences et détecter les chimères
+for record in records:
+    if detect_chimera(str(record.seq)):
+        print(record.id, "est une chimère")
